@@ -32,8 +32,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _LOADER_WRL_HPP_
-#define _LOADER_WRL_HPP_
+#ifndef LOADER_WRL_HPP_
+#define LOADER_WRL_HPP_
 
 #include "Loader.hpp"
 #include "Tokenizer.hpp"
@@ -46,18 +46,13 @@
 #include <wrl/IndexedLineSet.hpp>
 
 class LoaderWrl : public Loader {
-
-private:
-
   const static char* _ext;
 
 public:
+  LoaderWrl()  = default;
 
-  LoaderWrl()  {};
-  ~LoaderWrl() {};
-
-  bool  load(const char* filename, SceneGraph& wrl);
-  const char* ext() const { return _ext; }
+  bool load(const char* filename, SceneGraph& wrl) override;
+  const char* ext() const override { return _ext; }
 
 private:
 
@@ -76,4 +71,4 @@ private:
   bool loadVecString(Tokenizer &tkn,vector<string>& vec);
 };
 
-#endif /* _LOADER_WRL_HPP_ */
+#endif

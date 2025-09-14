@@ -116,6 +116,7 @@ public:
   int             getNumberOfTexCoord();
 
   void            setNormalPerVertex(bool value);
+  bool            getNormalPerVertex() const { return _normalPerVertex; }
   void            setColorPerVertex(bool value);
 
   enum Binding {

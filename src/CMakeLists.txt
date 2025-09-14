@@ -1,9 +1,12 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.16)
 
 project(dgp2025)
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # This variable is used to locate the bin directory where the dgpTest
 # application will be installed
@@ -35,5 +38,6 @@ set(LIB_LIST ${LIB_LIST} wrl)
 
 # build command line executable ifsTest
 add_subdirectory(test)
+add_subdirectory(testFaces)
 
 message("CODE_SIGN_IDENTITY = ${CODE_SIGN_IDENTITY}")

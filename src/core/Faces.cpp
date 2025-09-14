@@ -34,50 +34,136 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <math.h>
+#include <cmath>
 #include "Faces.hpp"
-  
-Faces::Faces(const int nV, const vector<int>& coordIndex) {
-  // TODO
+
+#include <stdexcept>
+#include <unordered_set>
+
+Faces::Faces(const int nV, const vector<int>& coordIndex)
+  : _coordIndex(coordIndex) {
+
+  std::unordered_set<int> uniqueIndexes;
+  int faceIndex = 0;
+  int coordIndexStart = 0;
+  int coordIndexEnd = 0;
+
+  for(int i : _coordIndex) {
+    if(i>=0) {
+      uniqueIndexes.insert(i);
+    }
+    else {
+      _faceMap.insert_or_assign(faceIndex, FaceCornerIndexes{ coordIndexStart, coordIndexEnd});
+      ++faceIndex;
+      coordIndexStart = coordIndexEnd + 1;
+    }
+    ++coordIndexEnd;
+  }
+
+  if (nV != uniqueIndexes.size()) {
+    throw std::runtime_error("Faces::Faces: number of vertices and number of indices must be equal");
+  }
+  _numbOfVertices = nV;
 }
 
 int Faces::getNumberOfVertices() const {
-  // TODO
-  return 0;
+  return _numbOfVertices;
 }
 
 int Faces::getNumberOfFaces() const {
-  // TODO
-  return 0;
+  return static_cast<int>(_faceMap.size());
 }
 
 int Faces::getNumberOfCorners() const {
-  // TODO
-  return 0;
+  // for the time being, we only support triangles
+  return static_cast<int>(_faceMap.size()) * 3;
 }
 
 int Faces::getFaceSize(const int iF) const {
-  // TODO
-  return 0;
-}
 
-int Faces::getFaceFirstCorner(const int iF) const {
-  // TODO
+  if (!isValidFace(iF))
+    return -1;
+
+  if (const auto iter = _faceMap.find(iF); iter != _faceMap.end()) {
+    return iter->second.end - iter->second.start;
+  }
   return -1;
 }
 
-int Faces::getFaceVertex(const int iF, const int j) const {
-  // TODO
+int Faces::getFaceFirstCorner(const int iF) const {
+  if (!isValidFace(iF))
+    return -1;
+
+  if (const auto iter = _faceMap.find(iF); iter != _faceMap.end()) {
+    return iter->second.start;
+  }
+  return -1;
+}
+
+int Faces::getFaceVertex(const int iF, const int iC) const {
+  if (!isValidFace(iF))
+    return -1;
+
+  if (!isValidCorner(iC))
+    return -1;
+
+  if (const auto iter = _faceMap.find(iF); iter != _faceMap.end()) {
+    if (iter->second.start <= iC && iC <= iter->second.end)
+      return _coordIndex[iC];
+    else
+      return -1;
+  }
   return -1;
 }
 
 int Faces::getCornerFace(const int iC) const {
-  // TODO
+
+  if (!isValidCorner(iC)) {
+    return -1;
+  }
+
+  if (_coordIndex[iC] == -1)
+    return -1;
+
+  for (const auto& [iF, face] : _faceMap) {
+    if (face.start <= iC && iC < face.end) {
+      return iF;
+    }
+  }
+
   return -1;
 }
 
 int Faces::getNextCorner(const int iC) const {
-  // TODO
+  if (!isValidCorner(iC)) {
+    return -1;
+  }
+
+  if (_coordIndex[iC] == -1)
+    return -1;
+
+  for (const auto& [iF, face] : _faceMap) {
+    if (face.start <= iC && iC < face.end) {
+      if (iC + 1 < face.end)
+        return iC + 1;
+      else {
+        // it's in the next face
+        if (iF + 1 < _faceMap.size())
+          return _faceMap.at(iF + 1).start;
+      }
+    }
+  }
+
   return -1;
+}
+
+bool Faces::isValidFace(const int iF) const
+{
+  return iF >= 0 && iF < static_cast<int>(_faceMap.size());
+}
+
+bool Faces::isValidCorner(const int iC) const
+{
+  return (iC >= 0 && iC < _coordIndex.size());
 }
 

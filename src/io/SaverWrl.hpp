@@ -32,8 +32,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _SAVER_WRL_HPP_
-#define _SAVER_WRL_HPP_
+#pragma once
 
 #include "Saver.hpp"
 #include <wrl/Shape.hpp>
@@ -46,18 +45,13 @@
 #include <wrl/SceneGraphTraversal.hpp>
 
 class SaverWrl : public Saver {
-
-private:
-
-const static char* _ext;
+  const static char* _ext;
 
 public:
+  SaverWrl() = default;
 
-  SaverWrl()  {};
-  ~SaverWrl() {};
-
-  bool  save(const char* filename, SceneGraph& wrl) const;
-  const char* ext() const { return _ext; }
+  bool save(const char* filename, SceneGraph& wrl) const override;
+  const char* ext() const override { return _ext; }
   
 private:
   
@@ -79,5 +73,3 @@ private:
   (FILE* fp, string indent, Transform* transform) const;
   
 };
-
-#endif /* _SAVER_WRL_HPP_ */

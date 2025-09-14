@@ -34,28 +34,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _LOADER_STL_HPP_
-#define _LOADER_STL_HPP_
+#pragma once
 
 #include "Loader.hpp"
-#include "Tokenizer.hpp"
-
-#include "wrl/Node.hpp"
 
 class LoaderStl : public Loader {
-
-private:
-
   const static char* _ext;
 
 public:
 
-  LoaderStl()  {};
-  ~LoaderStl() {};
+  LoaderStl() = default;
 
-  bool  load(const char* filename, SceneGraph& wrl);
-  const char* ext() const { return _ext; }
+  bool load(const char* filename, SceneGraph& wrl) override;
+  const char* ext() const override { return _ext; }
 
 };
-
-#endif /* _LOADER_STL_HPP_ */

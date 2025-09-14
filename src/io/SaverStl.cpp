@@ -36,6 +36,8 @@
 
 #include "SaverStl.hpp"
 
+#include <fstream>
+
 #include "wrl/Shape.hpp"
 #include "wrl/Appearance.hpp"
 #include "wrl/Material.hpp"
@@ -46,45 +48,69 @@
 const char* SaverStl::_ext = "stl";
 
 //////////////////////////////////////////////////////////////////////
-bool SaverStl::save(const char* filename, SceneGraph& wrl) const {
-  bool success = false;
-  if(filename!=(char*)0) {
+bool SaverStl::save(const char* filename, SceneGraph& sceneGraph) const {
+  return save(std::filesystem::path(filename), sceneGraph );
+}
 
-    // Check these conditions
+bool SaverStl::save(const std::filesystem::path& filename, SceneGraph& sceneGraph) const
+{
 
-    // 1) the SceneGraph should have a single child
-    // 2) the child should be a Shape node
-    // 3) the geometry of the Shape node should be an IndexedFaceSet node
+  // Check these conditions
 
-    // - construct an instance of the Faces class from the IndexedFaceSet
-    // - remember to delete it when you are done with it (if necessary)
-    //   before returning
-
-    // 4) the IndexedFaceSet should be a triangle mesh
-    // 5) the IndexedFaceSet should have normals per face
-
-    // if (all the conditions are satisfied) {
-
-    FILE* fp = fopen(filename,"w");
-    if(	fp!=(FILE*)0) {
-
-      // if set, use ifs->getName()
-      // otherwise use filename,
-      // but first remove directory and extension
-
-      fprintf(fp,"solid %s\n",filename);
-
-      // TODO ...
-      // for each face {
-      //   ...
-      // }
-      
-      fclose(fp);
-      success = true;
-    }
-
-    // } endif (all the conditions are satisfied)
-
+  // 1) the SceneGraph should have a single child
+  const std::vector<pNode>& sgChildren = sceneGraph.getChildren();
+  if (sgChildren.size() != 1) {
+    return false;
   }
-  return success;
+
+  Node* sgChild = sgChildren[0];
+
+  // 2) the child should be a Shape node
+  if (!sgChild->isShape()) {
+    return false;
+  }
+
+  // 3) the geometry of the Shape node should be an IndexedFaceSet node
+  auto* shapeNode = static_cast<Shape*>(sgChild);
+  if (!shapeNode->getGeometry() || !shapeNode->getGeometry()->isIndexedFaceSet()) {
+    return false;
+  }
+  auto* ifs = static_cast<IndexedFaceSet*>(shapeNode->getGeometry());
+
+  // 4) the IndexedFaceSet should be a triangle mesh
+  if (!ifs->isTriangleMesh()) {
+    return false;
+  }
+
+  // 5) the IndexedFaceSet should have normals per face
+  if (ifs->getNormalPerVertex()
+    || ifs->getNumberOfNormal() != ifs->getNumberOfFaces()
+    || !ifs->getNormalIndex().empty()) {
+    return false;
+  }
+
+  // construct an instance of the Faces class from the IndexedFaceSet
+  // remember to delete it when you are done with it (if necessary) before returning
+  Faces faces(ifs->getNumberOfCoord(),  ifs->getCoordIndex());
+
+  if (!exists(filename)) {
+    // warning, overwriting file
+  }
+
+  std::ofstream out(filename.string(), std::ios::out | std::ios::trunc);
+  if (out.is_open()) {
+    // if set, use ifs->getName()
+    // otherwise use filename,
+    // but first remove directory and extension
+
+    // fprintf(fp,"solid %s\n",filename);
+
+    // TODO ...
+    // for each face {
+    //   ...
+    // }
+  }
+  out.close();
+
+  return true;
 }

@@ -31,19 +31,22 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#pragma once
 
-#ifndef _Saver_h_
-#define _Saver_h_
-
+#include <filesystem>
+#include <__msvc_filebuf.hpp>
 #include <wrl/SceneGraph.hpp>
 
 class Saver {
-
 public:
+  virtual ~Saver() = default;
 
-  virtual bool  save(const char* filename, SceneGraph& wrl) const = 0;
+  virtual bool save(const char* filename, SceneGraph& sceneGraph) const = 0;
+  virtual bool save(const std::filesystem::path& filename, SceneGraph& sceneGraph) const
+  {
+    return save(filename.string().c_str(), sceneGraph);
+  }
+
   virtual const char* ext() const = 0;
 
 };
-
-#endif /* _Saver_h_ */

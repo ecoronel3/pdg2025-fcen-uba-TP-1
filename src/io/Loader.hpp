@@ -40,6 +40,7 @@
 class Loader {
 
 public:
+  virtual ~Loader() = default;
 
   virtual bool  load(const char* filename, SceneGraph& wrl) = 0;
   virtual const char* ext() const = 0;

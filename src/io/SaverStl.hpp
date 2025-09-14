@@ -34,27 +34,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _SAVER_STL_HPP_
-#define _SAVER_STL_HPP_
+#pragma once
 
 #include "Saver.hpp"
 
 class SaverStl : public Saver {
 
-private:
-
-const static char* _ext;
+  const static char* _ext;
 
 public:
+  SaverStl()  = default;
 
-  SaverStl()  {};
-  ~SaverStl() {};
+  bool save(const char* filename, SceneGraph& sceneGraph) const override;
+  bool save(const std::filesystem::path& filename, SceneGraph& sceneGraph) const override;
 
-  bool  save(const char* filename, SceneGraph& wrl) const;
-  const char* ext() const { return _ext; }
-  
-private:
+  const char* ext() const override { return _ext; }
 
 };
-
-#endif /* _SAVER_STL_HPP_ */

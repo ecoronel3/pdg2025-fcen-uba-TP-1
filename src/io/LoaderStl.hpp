@@ -45,7 +45,7 @@ public:
 
   LoaderStl() = default;
 
-  bool load(const char* filename, SceneGraph& wrl) override;
+  bool load(const char* filename, SceneGraph& sceneGraph) override;
   const char* ext() const override { return _ext; }
 
 };

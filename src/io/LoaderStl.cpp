@@ -37,6 +37,9 @@
 #include <stdio.h>
 #include "TokenizerFile.hpp"
 #include "LoaderStl.hpp"
+
+#include <unordered_map>
+
 #include "StrException.hpp"
 
 #include "wrl/Shape.hpp"
@@ -49,20 +52,29 @@
 
 const char* LoaderStl::_ext = "stl";
 
-bool LoaderStl::load(const char* filename, SceneGraph& wrl) {
+inline void hash_combine(std::size_t& seed) { }
+
+template <typename T, typename... Rest>
+inline void hash_combine(std::size_t& seed, const T& v, Rest... rest) {
+  std::hash<T> hasher;
+  seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+  hash_combine(seed, rest...);
+}
+
+bool LoaderStl::load(const char* filename, SceneGraph& sceneGraph) {
   bool success = false;
 
   // clear the scene graph
-  wrl.clear();
-  wrl.setUrl("");
+  sceneGraph.clear();
+  sceneGraph.setUrl("");
 
   FILE* fp = (FILE*)0;
   try {
 
     // open the file
-    if(filename==(char*)0) throw new StrException("filename==null");
+    if(filename==(char*)0) throw StrException("filename==null");
     fp = fopen(filename,"r");
-    if(fp==(FILE*)0) throw new StrException("fp==(FILE*)0");
+    if (fp== nullptr) throw StrException("fp==(FILE*)0");
 
     // use the io/Tokenizer class to parse the input ascii file
 
@@ -73,15 +85,31 @@ bool LoaderStl::load(const char* filename, SceneGraph& wrl) {
 
       // TODO ...
 
-      // create the scene graph structure :
+      // create the scene graph structure:
       // 1) the SceneGraph should have a single Shape node a child
+      auto* shapeNode = new Shape();
+      sceneGraph.addChild(shapeNode);
+
       // 2) the Shape node should have an Appearance node in its appearance field
+      auto* appearanceNode = new Appearance();
+      shapeNode->setAppearance(appearanceNode);
+
       // 3) the Appearance node should have a Material node in its material field
+      appearanceNode->setMaterial(new Material());
+
       // 4) the Shape node should have an IndexedFaceSet node in its geometry node
+      auto* geometryNode = new IndexedFaceSet();
+      geometryNode->setName(stlName);
+      shapeNode->setGeometry(geometryNode);
 
       // from the IndexedFaceSet
       // 5) get references to the coordIndex, coord, and normal arrays
+      std::vector<int>& coordIndex = geometryNode->getCoordIndex();
+      std::vector<float>& coord = geometryNode->getCoord();
+      std::vector<float>& normal = geometryNode->getNormal();
+
       // 6) set the normalPerVertex variable to false (i.e., normals per face)  
+      geometryNode->setNormalPerVertex(false);
 
       // the file should contain a list of triangles in the following format
 
@@ -96,21 +124,87 @@ bool LoaderStl::load(const char* filename, SceneGraph& wrl) {
       // - run an infinite loop to parse all the faces
       // - write a private method to parse each face within the loop
       // - the method should return true if successful, and false if not
-      // - if your method returns tru
+      // - if your method returns true
       //     update the normal, coord, and coordIndex variables
       // - if your method returns false
       //     throw an StrException explaining why the method failed
 
+      std::unordered_map<std::size_t, int> vertexMap;
+
+      while(true) {
+        if(tkn.expecting("facet") && tkn.expecting("normal")) {
+          float ni, nj, nk;
+          tkn.get();
+          ni = std::strtof(tkn.c_str(), nullptr);
+
+          tkn.get();
+          nj = std::strtof(tkn.c_str(), nullptr);
+
+          tkn.get();
+          nk = std::strtof(tkn.c_str(), nullptr);
+
+          normal.push_back(ni);
+          normal.push_back(nj);
+          normal.push_back(nk);
+
+          if(tkn.expecting("outer") && tkn.expecting("loop")) {
+            while (tkn.expecting("vertex")) {
+              float vx, vy, vz;
+              tkn.get();
+              vx = std::strtof(tkn.c_str(), nullptr);
+
+              tkn.get();
+              vy = std::strtof(tkn.c_str(), nullptr);
+
+              tkn.get();
+              vz = std::strtof(tkn.c_str(), nullptr);
+
+              std::size_t hash = 0;
+              hash_combine(hash, vx, vy, vz);
+
+              if (auto iter = vertexMap.find(hash); iter != vertexMap.end()) {
+                coordIndex.push_back(iter->second);
+              }
+              else {
+                coord.push_back(vx);
+                coord.push_back(vy);
+                coord.push_back(vz);
+                coordIndex.push_back(static_cast<int>(vertexMap.size()));
+                vertexMap.insert_or_assign(hash, static_cast<int>(vertexMap.size()));
+              }
+            }
+
+            if(tkn != "endloop") {
+                throw StrException("unexpected token: " + tkn);
+            }
+            coordIndex.push_back(-1);
+          }
+
+          tkn.get();
+          if(tkn != "endfacet") {
+            throw StrException("unexpected token: " + tkn);
+          }
+        }
+        else
+        {
+            if (!tkn.empty())
+            {
+                throw StrException("unexpected token: " + tkn);
+            }
+            // EOF
+            success = true;
+            break;
+        }
+      }
     }
 
     // close the file (this statement may not be reached)
     fclose(fp);
     
-  } catch(StrException* e) { 
+  } catch(const StrException& e) {
     
-    if(fp!=(FILE*)0) fclose(fp);
-    fprintf(stderr,"ERROR | %s\n",e->what());
-    delete e;
+    if( fp!= nullptr) fclose(fp);
+    fprintf(stderr,"ERROR | %s\n",e.what());
 
   }
 

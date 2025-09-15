@@ -114,8 +114,8 @@ bool SaverStl::save(const std::filesystem::path& filename, SceneGraph& sceneGrap
     const int numbOfFaces = faces.getNumberOfFaces();
     for (int iF = 0; iF < numbOfFaces; iF++) {
 
-      std::vector<float> normals = ifs->getNormal();
-      std::vector<float> coords = ifs->getCoord();
+      const std::vector<float>& normals = ifs->getNormal();
+      const std::vector<float>& coords = ifs->getCoord();
 
       out << std::format("facet normal {:.6e} {:.6e} {:.6e}\n", normals[3*iF], normals[3*iF + 1], normals[3*iF + 2]);
 

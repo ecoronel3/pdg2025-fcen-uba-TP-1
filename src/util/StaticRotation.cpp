@@ -35,7 +35,7 @@
 // #ifdef _WINDOWS
 // #define _USE_MATH_DEFINES
 // #endif
-#include <math.h>
+#include <cmath>
 #ifndef M_PI
 #define M_PI 3.141592654
 #endif
@@ -58,7 +58,7 @@ void StaticRotation::rotate(float* r /*[4]*/, float* x /*[3]*/, float* y /*[3]*/
   u0 = r[1]; u1 = r[2]; u2 = r[3];
   nu = u0*u0+u1*u1+u2*u2;
   if(nu>0.0f) {
-    nu = sqrt(u0*u0+u1*u1+u2*u2);
+    nu = std::sqrtf(u0*u0+u1*u1+u2*u2);
     u0 /= nu; u1 /= nu; u2 /= nu;
     // sin and cos of the angle of rotation
     c = cos(ang); s = sin(ang);

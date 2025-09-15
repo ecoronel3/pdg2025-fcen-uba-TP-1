@@ -36,6 +36,7 @@
 
 #include "SaverStl.hpp"
 
+#include <format>
 #include <fstream>
 
 #include "wrl/Shape.hpp"
@@ -103,12 +104,37 @@ bool SaverStl::save(const std::filesystem::path& filename, SceneGraph& sceneGrap
     // otherwise use filename,
     // but first remove directory and extension
 
-    // fprintf(fp,"solid %s\n",filename);
+    std::string name = ifs->getName();
+    name = name.empty() ?
+      filename.stem().string()
+        : name;
 
-    // TODO ...
-    // for each face {
-    //   ...
-    // }
+    out << "solid " << name << std::endl;
+
+    const int numbOfFaces = faces.getNumberOfFaces();
+    for (int iF = 0; iF < numbOfFaces; iF++) {
+
+      std::vector<float> normals = ifs->getNormal();
+      std::vector<float> coords = ifs->getCoord();
+
+      out << std::format("facet normal {:.6e} {:.6e} {:.6e}\n", normals[3*iF], normals[3*iF + 1], normals[3*iF + 2]);
+
+      out << "  outer loop\n";
+      int iC = faces.getFaceFirstCorner(iF);
+      int numbCorners = faces.getFaceSize(iF);
+      for (int j = 0; j < numbCorners; j++) {
+
+        if (iC == -1)
+          break;
+
+        const int coordIndex = faces.getFaceVertex(iF, iC);
+        out << std::format("    vertex {:.6e} {:.6e} {:.6e}\n", coords[3*coordIndex], coords[3*coordIndex + 1], coords[3*coordIndex + 2]);
+        iC = faces.getNextCorner(iC);
+      }
+      out << "  endloop\n";
+      out << "endfacet\n";
+    }
+
   }
   out.close();
 
